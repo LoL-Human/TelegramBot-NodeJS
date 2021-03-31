@@ -1,4 +1,12 @@
-node_modules
-test
-test*
+# node module
+node_modules/
+
+# session files
+lolhuman.json
+
+# lock files
+package-lock.json
+*.lock
+
 test*.*
+ocr
