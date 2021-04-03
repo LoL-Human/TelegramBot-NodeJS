@@ -15,11 +15,16 @@ const {
     prefix
 } = JSON.parse(fs.readFileSync(`./config.json`))
 
+if (bot_token == "") {
+    return console.log("=== BOT TOKEN CANNOT BE EMPTY ===")
+}
+
 const bot = new Telegraf(bot_token)
 
 bot.command('start', async(lol) => {
     user = await tele.getUser(lol)
     await help.start(lol, user.full_name)
+    await lol.deleteMessage()
 })
 
 bot.command('help', async(lol) => {
