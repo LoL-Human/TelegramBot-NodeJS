@@ -21,31 +21,57 @@ if (bot_token == "") {
 
 const bot = new Telegraf(bot_token)
 
+bot.on("new_chat_members", async(lol) => {
+    var message = lol.message
+    var pp_group = await tele.getPhotoProfile(message.chat.id)
+    var groupname = message.chat.title
+    var groupmembers = await bot.telegram.getChatMembersCount(message.chat.id)
+    for (x of message.new_chat_members) {
+        var pp_user = await tele.getPhotoProfile(x.id)
+        var full_name = tele.getUser(x).full_name
+        console.log(chalk.whiteBright("├"), chalk.cyanBright("[  JOINS  ]"), chalk.whiteBright(full_name), chalk.greenBright("join in"), chalk.whiteBright(groupname))
+        await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/base/welcome?apikey=${apikey}&img1=${pp_user}&img2=${pp_group}&background=https://i.ibb.co/8B6Q84n/LTqHsfYS.jpg&username=${full_name}&member=${groupmembers}&groupname=${groupname}` })
+    }
+})
+
+bot.on("left_chat_member", async(lol) => {
+    var message = lol.message
+    var pp_group = await tele.getPhotoProfile(message.chat.id)
+    var pp_user = await tele.getPhotoProfile(message.left_chat_member.id)
+    var pp_group = await tele.getPhotoProfile(message.chat.id)
+    var groupname = message.chat.title
+    var groupmembers = await bot.telegram.getChatMembersCount(message.chat.id)
+    var pp_user = await tele.getPhotoProfile(message.left_chat_member.id)
+    var full_name = tele.getUser(lol).full_name
+    console.log(chalk.whiteBright("├"), chalk.cyanBright("[  LEAVE  ]"), chalk.whiteBright(full_name), chalk.greenBright("leave from"), chalk.whiteBright(groupname))
+    await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/base/leave?apikey=${apikey}&img1=${pp_user}&img2=${pp_group}&background=https://i.ibb.co/8B6Q84n/LTqHsfYS.jpg&username=${full_name}&member=${groupmembers}&groupname=${groupname}` })
+})
+
 bot.command('start', async(lol) => {
-    user = await tele.getUser(lol)
+    user = tele.getUser(lol)
     await help.start(lol, user.full_name)
     await lol.deleteMessage()
 })
 
 bot.command('help', async(lol) => {
-    user = await tele.getUser(lol)
+    user = tele.getUser(lol)
     await help.help(lol, user.full_name)
 })
 
 bot.on("callback_query", async(lol) => {
     callback_data = lol.callbackQuery.data
-    user = await tele.getUser(lol)
+    user = tele.getUser(lol)
     const isGroup = lol.chat.type.includes("group")
     const groupName = isGroup ? lol.chat.title : ""
     if (!isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
     if (isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name), chalk.greenBright("in"), chalk.whiteBright(groupName))
+    if (callback_data == "help") return await help[callback_data](lol, user.full_name)
     await help[callback_data](lol)
 })
 
 bot.on("message", async(lol) => {
     try {
         const body = lol.message.text || lol.message.caption || ""
-
         comm = body.trim().split(" ").shift().toLowerCase()
         cmd = false
         if (prefix != "" && body.startsWith(prefix)) {
@@ -54,11 +80,11 @@ bot.on("message", async(lol) => {
         }
         const command = comm
         const args = await tele.getArgs(lol)
-        const user = await tele.getUser(lol)
+        const user = tele.getUser(lol)
 
         const reply = async(text) => {
             for (var x of range(0, text.length, 4096)) {
-                await lol.replyWithMarkdown(text.substr(x, 4096))
+                return await lol.replyWithMarkdown(text.substr(x, 4096), { disable_web_page_preview: true })
             }
         }
 
@@ -85,8 +111,9 @@ bot.on("message", async(lol) => {
         const isQuotedLocation = quotedMessage.hasOwnProperty("location")
         const isQuotedDocument = quotedMessage.hasOwnProperty("document")
         const isQuotedAnimation = quotedMessage.hasOwnProperty("animation")
+        const isQuoted = lol.message.hasOwnProperty("reply_to_message")
 
-        typeMessage = body.substr(0, 50).replace(/\n/g, '')
+        var typeMessage = body.substr(0, 50).replace(/\n/g, '')
         if (isImage) typeMessage = "Image"
         else if (isVideo) typeMessage = "Video"
         else if (isAudio) typeMessage = "Audio"
@@ -101,23 +128,19 @@ bot.on("message", async(lol) => {
         if (!isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
         if (isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name), chalk.greenBright("in"), chalk.whiteBright(groupName))
 
-        file_id = ""
-        if (isQuotedImage) {
-            photo = lol.message.reply_to_message.photo
-            file_id = photo[photo.length - 1].file_id
-        } else if (isQuotedDocument) {
-            file_id = lol.message.reply_to_message.document.file_id
-        } else if (isQuotedVideo) {
-            file_id = lol.message.reply_to_message.video.file_id
-        } else if (isQuotedAudio) {
-            file_id = lol.message.reply_to_message.audio.file_id
-        } else if (isQuotedAnimation) {
-            file_id = lol.message.reply_to_message.animation.file_id
+        var file_id = ""
+        if (isQuoted) {
+            file_id = isQuotedImage ? lol.message.reply_to_message.photo[lol.message.reply_to_message.photo.length - 1].file_id :
+                isQuotedVideo ? lol.message.reply_to_message.video.file_id :
+                isQuotedAudio ? lol.message.reply_to_message.audio.file_id :
+                isQuotedDocument ? lol.message.reply_to_message.document.file_id :
+                isQuotedAnimation ? lol.message.reply_to_message.animation.file_id : ""
         }
+        var mediaLink = file_id != "" ? await tele.getLink(file_id) : ""
 
         switch (command) {
             case 'help':
-                user = await tele.getUser(lol)
+                user = tele.getUser(lol)
                 await help.help(lol, user.full_name)
                 break
 
@@ -132,7 +155,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'alquran':
-                if (args.length < 1) return reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10 or ${prefix + command} 18/1-10`)
+                if (args.length < 1) return await reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10 or ${prefix + command} 18/1-10`)
                 urls = `https://api.lolhuman.xyz/api/quran/${args[0]}?apikey=${apikey}`
                 quran = await fetchJson(urls)
                 result = quran.result
@@ -145,13 +168,10 @@ bot.on("message", async(lol) => {
                     indo = x.indonesia
                     text += `${arab}\n${nomor}. ${latin}\n${indo}\n\n`
                 }
-                text = text.replace(/<u>/g, "").replace(/<\/u>/g, "")
-                text = text.replace(/<strong>/g, "").replace(/<\/strong>/g, "")
-                text = text.replace(/<u>/g, "").replace(/<\/u>/g, "")
                 await reply(text)
                 break
             case 'alquranaudio':
-                if (args.length == 0) return reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10`)
                 surah = args[0]
                 await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/quran/audio/${surah}?apikey=${apikey}` })
                 break
@@ -166,7 +186,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'kisahnabi':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Muhammad`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Muhammad`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/kisahnabi/${query}?apikey=${apikey}`)
                 result = result.result
@@ -178,7 +198,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'jadwalsholat':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Yogyakarta`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Yogyakarta`)
                 daerah = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/sholat/${daerah}?apikey=${apikey}`)
                 result = result.result
@@ -208,7 +228,7 @@ bot.on("message", async(lol) => {
                     })
                 break
             case 'ytsearch':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Melukis Senja`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 try {
                     query = args.join(" ")
                     result = await fetchJson(`https://api.lolhuman.xyz/api/ytsearch?apikey=${apikey}&query=${query}`)
@@ -225,53 +245,50 @@ bot.on("message", async(lol) => {
                 }
                 break
             case 'ytmp3':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
-                ini_link = args[0]
-                result = await fetchJson(`https://api.lolhuman.xyz/api/ytaudio?apikey=${apikey}&url=${ini_link}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
+                result = await fetchJson(`https://api.lolhuman.xyz/api/ytaudio2?apikey=${apikey}&url=${ args[0]}`)
                 result = result.result
                 caption = `\`❖ Title    :\` *${result.title}*\n`
-                caption += `\`❖ Uploader :\` *${result.uploader}*\n`
-                caption += `\`❖ Duration :\` *${result.duration}*\n`
-                caption += `\`❖ View     :\` *${result.view}*\n`
-                caption += `\`❖ Like     :\` *${result.like}*\n`
-                caption += `\`❖ Dislike  :\` *${result.dislike}*\n`
-                caption += `\`❖ Size     :\` *${result.link[3].size}*`
+                caption += `\`❖ Size     :\` *${result.size}*`
                 await lol.replyWithPhoto({ url: result.thumbnail }, { caption: caption, parse_mode: "Markdown" })
-                if (Number(result.link[3].size.split(` MB`)[0]) >= 50.00) return reply(`Sorry the bot cannot send more than 50 MB!`)
-                await lol.replyWithAudio({ url: result.link[3].link }, { title: result.title, thumb: result.thumbnail })
+                if (Number(result.size.split(` MB`)[0]) >= 50.00) return await reply(`Sorry the bot cannot send more than 50 MB!`)
+                await lol.replyWithAudio({ url: result.link, filename: result.title })
                 break
             case 'ytmp4':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
-                ini_link = args[0]
-                result = await fetchJson(`https://api.lolhuman.xyz/api/ytvideo?apikey=${apikey}&url=${ini_link}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
+                result = await fetchJson(`https://api.lolhuman.xyz/api/ytaudio2?apikey=${apikey}&url=${ args[0]}`)
                 result = result.result
                 caption = `\`❖ Title    :\` *${result.title}*\n`
-                caption += `\`❖ Uploader :\` *${result.uploader}*\n`
-                caption += `\`❖ Duration :\` *${result.duration}*\n`
-                caption += `\`❖ View     :\` *${result.view}*\n`
-                caption += `\`❖ Like     :\` *${result.like}*\n`
-                caption += `\`❖ Dislike  :\` *${result.dislike}*\n`
-                caption += `\`❖ Size     :\` *${result.link[3].size}*`
+                caption += `\`❖ Size     :\` *${result.size}*`
                 await lol.replyWithPhoto({ url: result.thumbnail }, { caption: caption, parse_mode: "Markdown" })
-                if (Number(result.link[0].size.split(` MB`)[0]) >= 50.00) return reply(`Sorry the bot cannot send more than 50 MB!`)
-                await lol.replyWithVideo({ url: result.link[0].link }, { thumb: result.thumbnail })
+                if (Number(result.size.split(` MB`)[0]) >= 50.00) return await reply(`Sorry the bot cannot send more than 50 MB!`)
+                await lol.replyWithVideo({ url: result.link })
                 break
             case 'tiktoknowm':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
-                url = args[0]
-                url = `https://api.lolhuman.xyz/api/tiktok?apikey=${apikey}&url=${url}`
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
+                url = `https://api.lolhuman.xyz/api/tiktok2?apikey=${apikey}&url=${args[0]}`
                 result = await fetchJson(url)
-                await lol.replyWithVideo({ url: result.result.link })
+                await lol.replyWithVideo({ url: result.result })
                 break
             case 'tiktokmusic':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
-                ini_link = args[0]
-                await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/tiktokmusic?apikey=${apikey}&url=${ini_link}` })
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
+                await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/tiktokmusic?apikey=${apikey}&url=${args[0]}` })
+                break
+            case 'twitterimage':
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://twitter.com/memefess/status/1385161473232543747`)
+                url = `https://api.lolhuman.xyz/api/twitterimage?apikey=${apikey}&url=${args[0]}`
+                result = await fetchJson(url)
+                await lol.replyWithPhoto({ url: result.result.link }, { caption: result.result.title })
+                break
+            case 'twittervideo':
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://twitter.com/gofoodindonesia/status/1229369819511709697`)
+                url = `https://api.lolhuman.xyz/api/twitter2?apikey=${apikey}&url=${args[0]}`
+                result = await fetchJson(url)
+                await lol.replyWithVideo({ url: result.result.link[0].url })
                 break
             case 'spotify':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://open.spotify.com/track/0ZEYRVISCaqz5yamWZWzaA`)
-                url = args[0]
-                result = await fetchJson(`https://api.lolhuman.xyz/api/spotify?apikey=${apikey}&url=${url}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://open.spotify.com/track/0ZEYRVISCaqz5yamWZWzaA`)
+                result = await fetchJson(`https://api.lolhuman.xyz/api/spotify?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
                 caption = `\`❖ Title      :\` *${result.title}*\n`
                 caption += `\`❖ Artists    :\` *${result.artists}*\n`
@@ -281,7 +298,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithAudio({ url: result.link }, { title: result.title, thumb: result.thumbnail })
                 break
             case 'spotifysearch':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Melukis Senja`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 try {
                     query = args.join(" ")
                     result = await fetchJson(`https://api.lolhuman.xyz/api/spotifysearch?apikey=${apikey}&query=${query}`)
@@ -298,7 +315,7 @@ bot.on("message", async(lol) => {
                 }
                 break
             case 'jooxplay':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Melukis Senja`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/jooxplay?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -317,9 +334,8 @@ bot.on("message", async(lol) => {
                 await lol.replyWithAudio({ url: result.audio[0].link, filename: result.info.song }, { thumb: result.image })
                 break
             case 'zippyshare':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://www51.zippyshare.com/v/5W0TOBz1/file.html`)
-                url = args[0]
-                url = await fetchJson(`https://api.lolhuman.xyz/api/zippyshare?apikey=${apikey}&url=${url}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://www51.zippyshare.com/v/5W0TOBz1/file.html`)
+                url = await fetchJson(`https://api.lolhuman.xyz/api/zippyshare?apikey=${apikey}&url=${args[0]}`)
                 url = url.result
                 text = `\`❖ File Name    :\` *${url.name_file}*\n`
                 text += `\`❖ Size         :\` *${url.size}*\n`
@@ -328,33 +344,50 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'pinterest':
-                if (args.length == 0) return reply(`Example: ${prefix + command} loli kawaii`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} loli kawaii`)
                 query = args.join(" ")
                 url = await fetchJson(`https://api.lolhuman.xyz/api/pinterest?apikey=${apikey}&query=${query}`)
                 url = url.result
                 await lol.replyWithPhoto({ url: url })
                 break
             case 'pinterestdl':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://id.pinterest.com/pin/696580267364426905/`)
-                url = args[0]
-                url = await fetchJson(`https://api.lolhuman.xyz/api/pinterestdl?apikey=${apikey}&url=${url}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://id.pinterest.com/pin/696580267364426905/`)
+                url = await fetchJson(`https://api.lolhuman.xyz/api/pinterestdl?apikey=${apikey}&url=${args[0]}`)
                 url = url.result["736x"]
                 await lol.replyWithPhoto({ url: url })
                 break
             case 'pixiv':
-                if (args.length == 0) return reply(`Example: ${prefix + command} loli kawaii`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} loli kawaii`)
                 query = args.join(" ")
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/pixiv?apikey=${apikey}&query=${query}` })
                 break
             case 'pixivdl':
-                if (args.length == 0) return reply(`Example: ${prefix + command} 63456028`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} 63456028`)
                 pixivid = args[0]
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/pixivdl/${pixivid}?apikey=${apikey}` })
                 break
 
+                // Searching
+            case 'reverse':
+                if (!isQuotedImage) return await reply(`Please reply a image use this command.`)
+                google = await fetchJson(`https://api.lolhuman.xyz/api/googlereverse?apikey=${apikey}&img=${mediaLink}`)
+                yandex = await fetchJson(`https://api.lolhuman.xyz/api/reverseyandex?apikey=${apikey}&img=${mediaLink}`)
+                options = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'Google', url: google.result },
+                                { text: 'Yandex', url: yandex.result }
+                            ]
+                        ]
+                    }
+                }
+                await lol.reply(`Found result`, options)
+                break
+
                 // AniManga //
             case 'character':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Miku Nakano`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Miku Nakano`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/character?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -371,7 +404,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.image.large }, { caption: text })
                 break
             case 'manga':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/manga?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -399,7 +432,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.coverImage.large }, { caption: text })
                 break
             case 'anime':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/anime?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -447,61 +480,65 @@ bot.on("message", async(lol) => {
                 }
                 break
             case 'kusonime':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://kusonime.com/nanatsu-no-taizai-bd-batch-subtitle-indonesia/`)
-                ini_url = args[0]
-                result = await fetchJson(`https://api.lolhuman.xyz/api/kusonime?apikey=${apikey}&url=${ini_url}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://kusonime.com/nanatsu-no-taizai-bd-batch-subtitle-indonesia/`)
+                result = await fetchJson(`https://api.lolhuman.xyz/api/kusonime?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
-                text = `Title : ${result.title}\n`
-                text += `Japanese : ${result.japanese}\n`
-                text += `Genre : ${result.genre}\n`
-                text += `Seasons : ${result.seasons}\n`
-                text += `Producers : ${result.producers}\n`
-                text += `Type : ${result.type}\n`
-                text += `Status : ${result.status}\n`
-                text += `Total Episode : ${result.total_episode}\n`
-                text += `Score : ${result.score}\n`
-                text += `Duration : ${result.duration}\n`
-                text += `Released On : ${result.released_on}\n`
-                text += `Desc : ${result.desc}\n`
+                text = `*Title : ${result.title}\n`
+                text += `**Japanese : ${result.japanese}\n`
+                text += `**Genre : ${result.genre}\n`
+                text += `**Seasons : ${result.seasons}\n`
+                text += `**Producers : ${result.producers}\n`
+                text += `**Type : ${result.type}\n`
+                text += `**Status : ${result.status}\n`
+                text += `**Total Episode : ${result.total_episode}\n`
+                text += `**Score : ${result.score}\n`
+                text += `**Duration : ${result.duration}\n`
+                text += `**Released On : ${result.released_on}*\n`
                 link_dl = result.link_dl
                 for (var x in link_dl) {
-                    text += `\n${x}\n`
+                    text += `\n\n*${x}*\n`
                     for (var y in link_dl[x]) {
-                        text += `${y} - ${link_dl[x][y]}\n`
+                        text += `[${y}](${link_dl[x][y]}) | `
                     }
                 }
-                await lol.replyWithPhoto({ url: result.thumbnail }, { caption: text })
+                if (text.length <= 1024) {
+                    return await lol.replyWithPhoto({ url: result.thumbnail }, { caption: text })
+                }
+                await lol.replyWithPhoto({ url: result.thumbnail })
+                await reply(text)
                 break
             case 'kusonimesearch':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/kusonimesearch?apikey=${apikey}&query=${query}`)
                 result = result.result
-                text = `Title : ${result.title}\n`
-                text += `Japanese : ${result.japanese}\n`
-                text += `Genre : ${result.genre}\n`
-                text += `Seasons : ${result.seasons}\n`
-                text += `Producers : ${result.producers}\n`
-                text += `Type : ${result.type}\n`
-                text += `Status : ${result.status}\n`
-                text += `Total Episode : ${result.total_episode}\n`
-                text += `Score : ${result.score}\n`
-                text += `Duration : ${result.duration}\n`
-                text += `Released On : ${result.released_on}\n`
-                text += `Desc : ${result.desc}\n`
+                text = `*Title : ${result.title}\n`
+                text += `**Japanese : ${result.japanese}\n`
+                text += `**Genre : ${result.genre}\n`
+                text += `**Seasons : ${result.seasons}\n`
+                text += `**Producers : ${result.producers}\n`
+                text += `**Type : ${result.type}\n`
+                text += `**Status : ${result.status}\n`
+                text += `**Total Episode : ${result.total_episode}\n`
+                text += `**Score : ${result.score}\n`
+                text += `**Duration : ${result.duration}\n`
+                text += `**Released On : ${result.released_on}*\n`
                 link_dl = result.link_dl
                 for (var x in link_dl) {
-                    text += `\n${x}\n`
+                    text += `\n\n*${x}*\n`
                     for (var y in link_dl[x]) {
-                        text += `${y} - ${link_dl[x][y]}\n`
+                        text += `[${y}](${link_dl[x][y]}) | `
                     }
                 }
-                await lol.replyWithPhoto({ url: result.thumbnail }, { caption: text })
+                if (text.length <= 1024) {
+                    return await lol.replyWithPhoto({ url: result.thumbnail }, { caption: text })
+                }
+                await lol.replyWithPhoto({ url: result.thumbnail })
+                await reply(text)
                 break
             case 'otakudesu':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://otakudesu.tv/lengkap/pslcns-sub-indo/`)
-                ini_url = args[0]
-                result = await fetchJson(`https://api.lolhuman.xyz/api/otakudesu?apikey=${apikey}&url=${ini_url}`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://otakudesu.tv/lengkap/pslcns-sub-indo/`)
+                result = await fetchJson(`https://api.lolhuman.xyz/api/otakudesu?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
                 text = `Title : ${result.title}\n`
                 text += `Japanese : ${result.japanese}\n`
@@ -514,25 +551,26 @@ bot.on("message", async(lol) => {
                 text += `Duration : ${result.duration}\n`
                 text += `Studios : ${result.status}\n`
                 text += `Rating : ${result.rating}\n`
-                text += `Credit : ${result.credit}\n`
+                text += `Credit : ${result.credit}\n\n`
                 get_link = result.link_dl
                 for (var x in get_link) {
-                    text += `\n\n*${get_link[x].title}*\n`
+                    text += `*${get_link[x].title}*\n`
                     for (var y in get_link[x].link_dl) {
                         ini_info = get_link[x].link_dl[y]
-                        text += `\n\`\`\`Reso : \`\`\`${ini_info.reso}\n`
-                        text += `\`\`\`Size : \`\`\`${ini_info.size}\n`
-                        text += `\`\`\`Link : \`\`\`\n`
+                        text += `\`Reso : \`${ini_info.reso}\n`
+                        text += `\`Size : \`${ini_info.size}\n`
+                        text += `\`Link : \``
                         down_link = ini_info.link_dl
                         for (var z in down_link) {
-                            text += `${z} - ${down_link[z]}\n`
+                            text += `[${z}](${down_link[z]}) | `
                         }
+                        text += "\n\n"
                     }
                 }
                 await reply(text)
                 break
             case 'otakudesusearch':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/otakudesusearch?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -558,7 +596,7 @@ bot.on("message", async(lol) => {
                         text += `\`\`\`Link : \`\`\`\n`
                         down_link = ini_info.link_dl
                         for (var z in down_link) {
-                            text += `${z} - ${down_link[z]}\n`
+                            text += `[${z}](${down_link[z]}) | `
                         }
                     }
                 }
@@ -567,7 +605,7 @@ bot.on("message", async(lol) => {
 
                 // Movie & Story
             case 'lk21':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Transformer`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Transformer`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/lk21?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -601,7 +639,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'wattpad':
-                if (args.length == 0) return reply(`Example: ${prefix + command} https://www.wattpad.com/707367860-kumpulan-quote-tere-liye-tere-liye-quote-quote`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.wattpad.com/707367860-kumpulan-quote-tere-liye-tere-liye-quote-quote`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/wattpad?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
                 text = `Title : ${result.title}\n`
@@ -618,7 +656,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.photo }, { caption: text })
                 break
             case 'wattpadsearch':
-                if (args.length == 0) return reply(`Example: ${prefix + command} Tere Liye`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} Tere Liye`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/wattpadsearch?apikey=${apikey}&query=${query}`)
                 result = result.result
@@ -654,18 +692,12 @@ bot.on("message", async(lol) => {
             case 'quotes':
                 quotes = await fetchJson(`https://api.lolhuman.xyz/api/random/quotes?apikey=${apikey}`)
                 quotes = quotes.result
-                author = quotes.by
-                quotes = quotes.quote
-                await reply(`_${quotes}_\n\n*― ${author}*`)
+                await reply(`_${quotes.by}_\n\n*― ${quotes.quote}*`)
                 break
             case 'quotesanime':
                 quotes = await fetchJson(`https://api.lolhuman.xyz/api/random/quotesnime?apikey=${apikey}`)
                 quotes = quotes.result
-                quote = quotes.quote
-                char = quotes.character
-                anime = quotes.anime
-                episode = quotes.episode
-                await reply(`_${quote}_\n\n*― ${char}*\n*― ${anime} ${episode}*`)
+                await reply(`_${quotes.quote}_\n\n*― ${quotes.character}*\n*― ${quotes.anime} ${quotes.episode}*`)
                 break
             case 'quotesdilan':
                 quotedilan = await fetchJson(`https://api.lolhuman.xyz/api/quotes/dilan?apikey=${apikey}`)
@@ -801,7 +833,7 @@ bot.on("message", async(lol) => {
             case 'summersand':
             case 'horrorblood':
             case 'thunder':
-                if (args.length == 0) return reply(`Example: ${prefix + command} LoL Human`)
+                if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 text = args.join(" ")
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/textprome/${command}?apikey=${apikey}&text=${text}` })
                 break
@@ -815,10 +847,8 @@ bot.on("message", async(lol) => {
             case 'wolflogo':
             case 'steel3d':
             case 'wallgravity':
-                if (args.length == 0) return reply(`Example: ${prefix + command} LoL Human`)
-                txt1 = args[0]
-                txt2 = args[1]
-                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/textprome2/${command}?apikey=${apikey}&text1=${txt1}&text2=${txt2}` })
+                if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
+                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/textprome2/${command}?apikey=${apikey}&text1=${args[0]}&text2=${args[1]}` })
                 break
 
                 // Photo Oxy //
@@ -846,18 +876,15 @@ bot.on("message", async(lol) => {
             case 'flamming':
             case 'harrypotter':
             case 'carvedwood':
-                if (args.length == 0) return reply(`Example: ${prefix + command} LoL Human`)
-                text = args.join(" ")
-                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy1/${command}?apikey=${apikey}&text=${text}` })
+                if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
+                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy1/${command}?apikey=${apikey}&text=${args.join(" ")}` })
                 break
             case 'tiktok':
             case 'arcade8bit':
             case 'battlefield4':
             case 'pubg':
-                if (args.length == 0) return reply(`Example: ${prefix + command} LoL Human`)
-                txt1 = args[0]
-                txt2 = args[1]
-                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy2/${command}?apikey=${apikey}&text1=${txt1}&text2=${txt2}` })
+                if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
+                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy2/${command}?apikey=${apikey}&text1=${args[0]}&text2=${args[1]}` })
                 break
 
                 // Ephoto 360 //
@@ -891,9 +918,23 @@ bot.on("message", async(lol) => {
             case 'goldplaybutton':
             case 'silverplaybutton':
             case 'freefire':
-                if (args.length == 0) return reply(`Example: ${prefix + command} LoL Human`)
-                text = args.join(" ")
-                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/ephoto1/${command}?apikey=${apikey}&text=${text}` })
+            case 'cartoongravity':
+            case 'anonymhacker':
+            case 'anonymhacker':
+            case 'mlwall':
+            case 'pubgmaskot':
+            case 'aovwall':
+            case 'logogaming':
+            case 'fpslogo':
+            case 'avatarlolnew':
+            case 'lolbanner':
+            case 'avatardota':
+                if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
+                await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/ephoto1/${command}?apikey=${apikey}&text=${args.join(" ")}` })
+                break
+            case 'test':
+                test = await bot.telegram.getChatMembersCount(lol.message.chat.id)
+                console.log(test)
                 break
             default:
                 if (!isGroup && !isCmd && !isMedia) {
