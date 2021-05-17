@@ -946,7 +946,6 @@ bot.on("message", async(lol) => {
                 }
         }
     } catch (e) {
-        throw e
         console.log(chalk.whiteBright("├"), chalk.cyanBright("[  ERROR  ]"), chalk.redBright(e))
     }
 })
