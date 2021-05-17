@@ -55,18 +55,21 @@ bot.command('start', async(lol) => {
 
 bot.command('help', async(lol) => {
     user = tele.getUser(lol)
-    await help.help(lol, user.full_name)
+    await help.help(lol, user.full_name, lol.message.from.id.toString())
 })
 
 bot.on("callback_query", async(lol) => {
-    callback_data = lol.callbackQuery.data
+    cb_data = lol.callbackQuery.data.split("-")
+    user_id = Number(cb_data[1])
+    if (lol.callbackQuery.from.id != user_id) return lol.answerCbQuery("Sorry, You do not have the right to access this button.", { show_alert: true })
+    callback_data = cb_data[0]
     user = tele.getUser(lol)
     const isGroup = lol.chat.type.includes("group")
     const groupName = isGroup ? lol.chat.title : ""
     if (!isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
     if (isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name), chalk.greenBright("in"), chalk.whiteBright(groupName))
-    if (callback_data == "help") return await help[callback_data](lol, user.full_name)
-    await help[callback_data](lol)
+    if (callback_data == "help") return await help[callback_data](lol, user.full_name, user_id)
+    await help[callback_data](lol, user_id.toString())
 })
 
 bot.on("message", async(lol) => {
@@ -140,8 +143,7 @@ bot.on("message", async(lol) => {
 
         switch (command) {
             case 'help':
-                user = tele.getUser(lol)
-                await help.help(lol, user.full_name)
+                await help.help(lol, user.full_name, lol.message.from.id.toString())
                 break
 
                 // Islami //
