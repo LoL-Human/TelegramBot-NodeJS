@@ -42,19 +42,19 @@ bot.on("left_chat_member", async(lol) => {
     var groupname = message.chat.title
     var groupmembers = await bot.telegram.getChatMembersCount(message.chat.id)
     var pp_user = await tele.getPhotoProfile(message.left_chat_member.id)
-    var full_name = tele.getUser(lol).full_name
+    var full_name = tele.getUser(message.left_chat_member).full_name
     console.log(chalk.whiteBright("├"), chalk.cyanBright("[  LEAVE  ]"), chalk.whiteBright(full_name), chalk.greenBright("leave from"), chalk.whiteBright(groupname))
     await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/base/leave?apikey=${apikey}&img1=${pp_user}&img2=${pp_group}&background=https://i.ibb.co/8B6Q84n/LTqHsfYS.jpg&username=${full_name}&member=${groupmembers}&groupname=${groupname}` })
 })
 
 bot.command('start', async(lol) => {
-    user = tele.getUser(lol)
+    user = tele.getUser(lol.message.from)
     await help.start(lol, user.full_name)
     await lol.deleteMessage()
 })
 
 bot.command('help', async(lol) => {
-    user = tele.getUser(lol)
+    user = tele.getUser(lol.message.from)
     await help.help(lol, user.full_name, lol.message.from.id.toString())
 })
 
@@ -63,7 +63,7 @@ bot.on("callback_query", async(lol) => {
     user_id = Number(cb_data[1])
     if (lol.callbackQuery.from.id != user_id) return lol.answerCbQuery("Sorry, You do not have the right to access this button.", { show_alert: true })
     callback_data = cb_data[0]
-    user = tele.getUser(lol)
+    user = tele.getUser(lol.callbackQuery.from)
     const isGroup = lol.chat.type.includes("group")
     const groupName = isGroup ? lol.chat.title : ""
     if (!isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
@@ -83,7 +83,7 @@ bot.on("message", async(lol) => {
         }
         const command = comm
         const args = await tele.getArgs(lol)
-        const user = tele.getUser(lol)
+        const user = tele.getUser(lol.message.from)
 
         const reply = async(text) => {
             for (var x of range(0, text.length, 4096)) {
