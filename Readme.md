@@ -21,7 +21,8 @@
 ## Edit config file
 Edit the required value in `config.json`. You can get the apikey at [`LoL Human Rest API`](http://api.lolhuman.xyz/). And get bot token at [`@BotFather`](http://t.me/BotFather).
 ```json
-{
+{ 
+    "usernameOwner": "BryanRfly",
     "apikey": "",
     "bot_token": "",
     "owner": "LoL Human",
