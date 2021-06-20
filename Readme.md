@@ -45,7 +45,7 @@ Edit the required value in `config.json`. You can get the apikey at [`LoL Human 
 ```
 
 # project 
-* [`BryanBot`](https://t.me/BryanRflyy)
+* [`BryanBot`](https://t.me/BryanRafly_bot)
 
 ## Note:
 * You can request a case in my [`WhatsApp`](http://wa.me/6289649480997).
