@@ -44,6 +44,9 @@ Edit the required value in `config.json`. You can get the apikey at [`LoL Human 
 > npm start
 ```
 
+# project 
+* [`BryanBot`](https://t.me/BryanRflyy)
+
 ## Note:
 * You can request a case in my [`WhatsApp`](http://wa.me/6289649480997).
 
