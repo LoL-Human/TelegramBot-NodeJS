@@ -1,12 +1,28 @@
-const { fetchJson, range, parseMarkdown } = require('./lib/function')
+/*
+
+    Base: LoL-Human
+    Recode: BryanRfly
+
+Ojo Lali Tuku Apikey Ben Fitur'e Mlaku Kabehh😆
+*/
+const { fetchJson, range, parseMarkdown } = require('./lib/function') 
 const { Telegraf } = require('telegraf')
+const ig = require('insta-fetcher') 
+const speed = require('performance-now')
 const help = require('./lib/help')
 const tele = require('./lib/tele')
-const chalk = require('chalk')
+const chalk = require('chalk') 
+const axios = require('axios')
 const os = require('os')
-const fs = require('fs')
+const fs = require('fs') 
+const mess = JSON.parse(fs.readFileSync(`./mess.json`))
+const _user = JSON.parse(fs.readFileSync(`./lib/user.json`))
+const _ban = JSON.parse(fs.readFileSync('./lib/banned.json'))
 
-const {
+const hem = '```'
+const { 
+    usernameOwner, 
+    xkey, 
     apikey,
     bot_token,
     owner,
@@ -21,6 +37,7 @@ if (bot_token == "") {
 
 const bot = new Telegraf(bot_token)
 
+
 bot.on("new_chat_members", async(lol) => {
     var message = lol.message
     var pp_group = await tele.getPhotoProfile(message.chat.id)
@@ -30,7 +47,7 @@ bot.on("new_chat_members", async(lol) => {
         var pp_user = await tele.getPhotoProfile(x.id)
         var full_name = tele.getUser(x).full_name
         console.log(chalk.whiteBright("├"), chalk.cyanBright("[  JOINS  ]"), chalk.whiteBright(full_name), chalk.greenBright("join in"), chalk.whiteBright(groupname))
-        await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/base/welcome?apikey=${apikey}&img1=${pp_user}&img2=${pp_group}&background=https://i.ibb.co/8B6Q84n/LTqHsfYS.jpg&username=${full_name}&member=${groupmembers}&groupname=${groupname}` })
+        await lol.replyWithPhoto({ url: `https://hardianto-chan.herokuapp.com/api/tools/welcomer?nama=${full_name}&namaGb=${groupname}&pepeGb=${pp_group}&totalMem=${groupmembers}&pepeUser=${pp_user}&bege=https://telegra.ph/file/833c102f481b7fc37ff1b.jpg&apikey=hardianto` }, {caption: `Welcome Kak ${full_name}`, parse_mode: "Markdown" })
     }
 })
 
@@ -44,14 +61,8 @@ bot.on("left_chat_member", async(lol) => {
     var pp_user = await tele.getPhotoProfile(message.left_chat_member.id)
     var full_name = tele.getUser(message.left_chat_member).full_name
     console.log(chalk.whiteBright("├"), chalk.cyanBright("[  LEAVE  ]"), chalk.whiteBright(full_name), chalk.greenBright("leave from"), chalk.whiteBright(groupname))
-    await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/base/leave?apikey=${apikey}&img1=${pp_user}&img2=${pp_group}&background=https://i.ibb.co/8B6Q84n/LTqHsfYS.jpg&username=${full_name}&member=${groupmembers}&groupname=${groupname}` })
-})
-
-bot.command('start', async(lol) => {
-    user = tele.getUser(lol.message.from)
-    await help.start(lol, user.full_name)
-    await lol.deleteMessage()
-})
+    await lol.replyWithPhoto({ url: `https://hardianto-chan.herokuapp.com/api/tools/leave?nama=${full_name}&namaGb=${groupname}&pepeGb=${pp_group}&totalMem=${groupmembers}&pepeUser=${pp_user}&bege=https://telegra.ph/file/833c102f481b7fc37ff1b.jpg&apikey=hardianto` }, {caption: `GoodBye Kak ${full_name}`, parse_mode: "Markdown" })
+    })
 
 bot.command('help', async(lol) => {
     user = tele.getUser(lol.message.from)
@@ -63,7 +74,8 @@ bot.on("callback_query", async(lol) => {
     user_id = Number(cb_data[1])
     if (lol.callbackQuery.from.id != user_id) return lol.answerCbQuery("Sorry, You do not have the right to access this button.", { show_alert: true })
     callback_data = cb_data[0]
-    user = tele.getUser(lol.callbackQuery.from)
+    const user = tele.getUser(lol.callbackQuery.from)
+    const chatid = lol.chat.id
     const isGroup = lol.chat.type.includes("group")
     const groupName = isGroup ? lol.chat.title : ""
     if (!isGroup) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ ACTIONS ]"), chalk.whiteBright(callback_data), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
@@ -80,17 +92,26 @@ bot.on("message", async(lol) => {
         if (prefix != "" && body.startsWith(prefix)) {
             cmd = true
             comm = body.slice(1).trim().split(" ").shift().toLowerCase()
-        }
-        const command = comm
+        } 
+        
+        
+        const command = comm 
         const args = await tele.getArgs(lol)
-        const user = tele.getUser(lol.message.from)
+        const user = tele.getUser(lol.message.from) 
+        const itsme = tele.getBot(lol.message) 
+        const ownerId = [usernameOwner]
+        
+        const isUser = _user.includes(user.id)
+        const isBann = _ban.includes(user.username)
+        const isOwner = ownerId.includes(user.username)
 
         const reply = async(text) => {
             for (var x of range(0, text.length, 4096)) {
                 return await lol.replyWithMarkdown(text.substr(x, 4096), { disable_web_page_preview: true })
             }
         }
-
+        
+        const query = args.join(' ')
         const isCmd = cmd
         const isGroup = lol.chat.type.includes("group")
         const groupName = isGroup ? lol.chat.title : ""
@@ -126,10 +147,10 @@ bot.on("message", async(lol) => {
         else if (isDocument) typeMessage = "Document"
         else if (isAnimation) typeMessage = "Animation"
 
-        if (!isGroup && !isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ PRIVATE ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
-        if (isGroup && !isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[  GROUP  ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name), chalk.greenBright("in"), chalk.whiteBright(groupName))
-        if (!isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name))
-        if (isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.full_name), chalk.greenBright("in"), chalk.whiteBright(groupName))
+        if (!isGroup && !isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ PRIVATE ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.username))
+        if (isGroup && !isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[  GROUP  ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.username), chalk.greenBright("in"), chalk.whiteBright(groupName))
+        if (!isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.username))
+        if (isGroup && isCmd) console.log(chalk.whiteBright("├"), chalk.cyanBright("[ COMMAND ]"), chalk.whiteBright(typeMessage), chalk.greenBright("from"), chalk.whiteBright(user.username), chalk.greenBright("in"), chalk.whiteBright(groupName))
 
         var file_id = ""
         if (isQuoted) {
@@ -140,14 +161,19 @@ bot.on("message", async(lol) => {
                 isQuotedAnimation ? lol.message.reply_to_message.animation.file_id : ""
         }
         var mediaLink = file_id != "" ? await tele.getLink(file_id) : ""
-
+       
+          
         switch (command) {
-            case 'help':
-                await help.help(lol, user.full_name, lol.message.from.id.toString())
+            case 'help': 
+                  runtime = process.uptime()
+                 if (!isUser) return await reply(mess.ser)
+                 await help.help(lol, user.full_name, lol.message.from.id.toString())
                 break
 
                 // Islami //
             case 'listsurah':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/quran?apikey=${apikey}`)
                 result = result.result
                 text = 'List Surah:\n'
@@ -157,6 +183,8 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'alquran':
+                if (isBann) return reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length < 1) return await reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10 or ${prefix + command} 18/1-10`)
                 urls = `https://api.lolhuman.xyz/api/quran/${args[0]}?apikey=${apikey}`
                 quran = await fetchJson(urls)
@@ -173,11 +201,13 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'alquranaudio':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} 18 or ${prefix + command} 18/10`)
                 surah = args[0]
                 await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/quran/audio/${surah}?apikey=${apikey}` })
                 break
             case 'asmaulhusna':
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/asmaulhusna?apikey=${apikey}`)
                 result = result.result
                 text = `\`No        :\` *${result.index}*\n`
@@ -188,6 +218,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'kisahnabi':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Muhammad`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/kisahnabi/${query}?apikey=${apikey}`)
@@ -200,6 +231,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'jadwalsholat':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Yogyakarta`)
                 daerah = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/sholat/${daerah}?apikey=${apikey}`)
@@ -220,16 +252,20 @@ bot.on("message", async(lol) => {
 
                 // Downloader //
             case 'ytplay':
-                if (args.length == 0) return await reply(`Example: ${prefix + command} melukis senja`)
-                await fetchJson(`https://api.lolhuman.xyz/api/ytsearch?apikey=${apikey}&query=${args.join(" ")}`)
-                    .then(async(result) => {
-                        await fetchJson(`https://api.lolhuman.xyz/api/ytaudio2?apikey=${apikey}&url=https://www.youtube.com/watch?v=${result.result[0].videoId}`)
-                            .then(async(result) => {
-                                await lol.replyWithAudio({ url: result.result.link, filename: result.result.title }, { thumb: result.result.thumbnail })
-                            })
-                    })
-                break
+            case 'playyt':
+            case 'play':
+            if (!isUser) return reply(mess.ser)
+            if (isBann) return reply(mess.ban)
+            if (!query) return reply('Input Teks')
+            try { 
+                  result = await fetchJson(`https://api.xteam.xyz/dl/play?lagu=${query}&APIKEY=${xkey}`) 
+                  await lol.replyWithVideo({ url:`${result.url}` })
+                  } catch(e) {
+                  reply('' + e)
+                  }
+                  break
             case 'ytsearch':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 try {
                     query = args.join(" ")
@@ -243,10 +279,11 @@ bot.on("message", async(lol) => {
                         await lol.replyWithPhoto({ url: res.thumbnail }, { caption: caption, parse_mode: "Markdown" })
                     })
                 } catch (e) {
-                    await help.messageError(lol)
+                    await reply('' + e)
                 }
                 break
             case 'ytmp3':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/ytaudio2?apikey=${apikey}&url=${ args[0]}`)
                 result = result.result
@@ -257,6 +294,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithAudio({ url: result.link, filename: result.title })
                 break
             case 'ytmp4':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.youtube.com/watch?v=qZIQAk-BUEc`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/ytaudio2?apikey=${apikey}&url=${ args[0]}`)
                 result = result.result
@@ -267,28 +305,33 @@ bot.on("message", async(lol) => {
                 await lol.replyWithVideo({ url: result.link })
                 break
             case 'tiktoknowm':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
                 url = `https://api.lolhuman.xyz/api/tiktok2?apikey=${apikey}&url=${args[0]}`
                 result = await fetchJson(url)
                 await lol.replyWithVideo({ url: result.result })
                 break
             case 'tiktokmusic':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
                 await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/tiktokmusic?apikey=${apikey}&url=${args[0]}` })
                 break
             case 'twitterimage':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://twitter.com/memefess/status/1385161473232543747`)
                 url = `https://api.lolhuman.xyz/api/twitterimage?apikey=${apikey}&url=${args[0]}`
                 result = await fetchJson(url)
                 await lol.replyWithPhoto({ url: result.result.link }, { caption: result.result.title })
                 break
             case 'twittervideo':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://twitter.com/gofoodindonesia/status/1229369819511709697`)
                 url = `https://api.lolhuman.xyz/api/twitter2?apikey=${apikey}&url=${args[0]}`
                 result = await fetchJson(url)
                 await lol.replyWithVideo({ url: result.result.link[0].url })
                 break
             case 'spotify':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://open.spotify.com/track/0ZEYRVISCaqz5yamWZWzaA`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/spotify?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
@@ -300,6 +343,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithAudio({ url: result.link }, { title: result.title, thumb: result.thumbnail })
                 break
             case 'spotifysearch':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 try {
                     query = args.join(" ")
@@ -317,6 +361,7 @@ bot.on("message", async(lol) => {
                 }
                 break
             case 'jooxplay':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Melukis Senja`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/jooxplay?apikey=${apikey}&query=${query}`)
@@ -336,6 +381,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithAudio({ url: result.audio[0].link, filename: result.info.song }, { thumb: result.image })
                 break
             case 'zippyshare':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://www51.zippyshare.com/v/5W0TOBz1/file.html`)
                 url = await fetchJson(`https://api.lolhuman.xyz/api/zippyshare?apikey=${apikey}&url=${args[0]}`)
                 url = url.result
@@ -345,32 +391,42 @@ bot.on("message", async(lol) => {
                 text += `\`❖ Download Url :\` *${url.download_url}*`
                 await reply(text)
                 break
-            case 'pinterest':
-                if (args.length == 0) return await reply(`Example: ${prefix + command} loli kawaii`)
-                query = args.join(" ")
-                url = await fetchJson(`https://api.lolhuman.xyz/api/pinterest?apikey=${apikey}&query=${query}`)
-                url = url.result
-                await lol.replyWithPhoto({ url: url })
-                break
-            case 'pinterestdl':
+        case 'pinterestdl':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://id.pinterest.com/pin/696580267364426905/`)
                 url = await fetchJson(`https://api.lolhuman.xyz/api/pinterestdl?apikey=${apikey}&url=${args[0]}`)
                 url = url.result["736x"]
                 await lol.replyWithPhoto({ url: url })
                 break
             case 'pixiv':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} loli kawaii`)
                 query = args.join(" ")
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/pixiv?apikey=${apikey}&query=${query}` })
                 break
             case 'pixivdl':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} 63456028`)
                 pixivid = args[0]
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/pixivdl/${pixivid}?apikey=${apikey}` })
-                break
-
+                break 
+               case 'pinterest':
+			   case 'image': 
+			   if (isBann) return await reply(mess.ban)
+			   if (!isUser) return await reply(mess.ser)
+               if (!query) return await reply('Input Query') 
+			   try {
+               ini_image = await fetchJson(`https://fdciabdul.tech/api/pinterest/?keyword=${query}`) 
+               ini_hasilp = JSON.parse(JSON.stringify(ini_image));
+               ini_hasil1 = ini_hasilp[Math.floor(Math.random() * ini_hasilp.length)];
+               await lol.replyWithPhoto({ url: `${ini_hasil1}` })
+               } catch(e) {
+               	reply('Status ' + e)
+               }
+               break
                 // Searching
             case 'reverse':
+                if (!isUser) return await reply(mess.ser)
                 if (!isQuotedImage) return await reply(`Please reply a image use this command.`)
                 google = await fetchJson(`https://api.lolhuman.xyz/api/googlereverse?apikey=${apikey}&img=${mediaLink}`)
                 yandex = await fetchJson(`https://api.lolhuman.xyz/api/reverseyandex?apikey=${apikey}&img=${mediaLink}`)
@@ -389,6 +445,7 @@ bot.on("message", async(lol) => {
 
                 // AniManga //
             case 'character':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Miku Nakano`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/character?apikey=${apikey}&query=${query}`)
@@ -406,6 +463,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.image.large }, { caption: text })
                 break
             case 'manga':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/manga?apikey=${apikey}&query=${query}`)
@@ -434,6 +492,7 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.coverImage.large }, { caption: text })
                 break
             case 'anime':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/anime?apikey=${apikey}&query=${query}`)
@@ -464,7 +523,8 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.coverImage.large }, { caption: text })
                 break
             case 'wait':
-                if (isQuotedImage || isQuotedAnimation || isQuotedVideo || isQuotedDocument) {
+                 if (!isUser) return await reply(mess.ser)
+                 if (isQuotedImage || isQuotedAnimation || isQuotedVideo || isQuotedDocument) {
                     url_file = await tele.getLink(file_id)
                     result = await fetchJson(`https://api.lolhuman.xyz/api/wait?apikey=${apikey}&img=${url_file}`)
                     result = result.result
@@ -482,6 +542,7 @@ bot.on("message", async(lol) => {
                 }
                 break
             case 'kusonime':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://kusonime.com/nanatsu-no-taizai-bd-batch-subtitle-indonesia/`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/kusonime?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
@@ -510,6 +571,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'kusonimesearch':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/kusonimesearch?apikey=${apikey}&query=${query}`)
@@ -539,6 +601,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'otakudesu':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://otakudesu.tv/lengkap/pslcns-sub-indo/`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/otakudesu?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
@@ -572,6 +635,7 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'otakudesusearch':
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Gotoubun No Hanayome`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/otakudesusearch?apikey=${apikey}&query=${query}`)
@@ -607,6 +671,8 @@ bot.on("message", async(lol) => {
 
                 // Movie & Story
             case 'lk21':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Transformer`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/lk21?apikey=${apikey}&query=${query}`)
@@ -627,6 +693,8 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.thumbnail }, { caption: text })
                 break
             case 'drakorongoing':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/drakorongoing?apikey=${apikey}`)
                 result = result.result
                 text = "Ongoing Drakor\n\n"
@@ -641,6 +709,8 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'wattpad':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} https://www.wattpad.com/707367860-kumpulan-quote-tere-liye-tere-liye-quote-quote`)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/wattpad?apikey=${apikey}&url=${args[0]}`)
                 result = result.result
@@ -658,6 +728,8 @@ bot.on("message", async(lol) => {
                 await lol.replyWithPhoto({ url: result.photo }, { caption: text })
                 break
             case 'wattpadsearch':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} Tere Liye`)
                 query = args.join(" ")
                 result = await fetchJson(`https://api.lolhuman.xyz/api/wattpadsearch?apikey=${apikey}&query=${query}`)
@@ -674,6 +746,8 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'cerpen':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/cerpen?apikey=${apikey}`)
                 result = result.result
                 text = `Title : ${result.title}\n`
@@ -682,6 +756,8 @@ bot.on("message", async(lol) => {
                 await reply(text)
                 break
             case 'ceritahoror':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/ceritahoror?apikey=${apikey}`)
                 result = result.result
                 text = `Title : ${result.title}\n`
@@ -692,30 +768,42 @@ bot.on("message", async(lol) => {
 
                 // Random Text //
             case 'quotes':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 quotes = await fetchJson(`https://api.lolhuman.xyz/api/random/quotes?apikey=${apikey}`)
                 quotes = quotes.result
                 await reply(`_${quotes.by}_\n\n*― ${quotes.quote}*`)
                 break
             case 'quotesanime':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 quotes = await fetchJson(`https://api.lolhuman.xyz/api/random/quotesnime?apikey=${apikey}`)
                 quotes = quotes.result
                 await reply(`_${quotes.quote}_\n\n*― ${quotes.character}*\n*― ${quotes.anime} ${quotes.episode}*`)
                 break
             case 'quotesdilan':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 quotedilan = await fetchJson(`https://api.lolhuman.xyz/api/quotes/dilan?apikey=${apikey}`)
                 await reply(quotedilan.result)
                 break
             case 'quotesimage':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/random/${command}?apikey=${apikey}` })
                 break
             case 'faktaunik':
             case 'katabijak':
             case 'pantun':
             case 'bucin':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/random/${command}?apikey=${apikey}`)
                 await reply(result.result)
                 break
             case 'randomnama':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 result = await fetchJson(`https://api.lolhuman.xyz/api/random/nama?apikey=${apikey}`)
                 await reply(result.result)
                 break
@@ -734,6 +822,8 @@ bot.on("message", async(lol) => {
             case 'shinobu':
             case 'megumin':
             case 'wallnime':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/random/${command}?apikey=${apikey}` })
                 break
             case 'chiisaihentai':
@@ -755,6 +845,8 @@ bot.on("message", async(lol) => {
             case 'biganimetiddies':
             case 'animebellybutton':
             case 'hentai4everyone':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/random/nsfw/${command}?apikey=${apikey}` })
                 break
             case 'bj':
@@ -799,6 +891,8 @@ bot.on("message", async(lol) => {
             case 'pussy_jpg':
             case 'kemonomimi':
             case 'nsfw_avatar':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/random2/${command}?apikey=${apikey}` })
                 break
 
@@ -835,6 +929,8 @@ bot.on("message", async(lol) => {
             case 'summersand':
             case 'horrorblood':
             case 'thunder':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 text = args.join(" ")
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/textprome/${command}?apikey=${apikey}&text=${text}` })
@@ -849,6 +945,8 @@ bot.on("message", async(lol) => {
             case 'wolflogo':
             case 'steel3d':
             case 'wallgravity':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/textprome2/${command}?apikey=${apikey}&text1=${args[0]}&text2=${args[1]}` })
                 break
@@ -878,6 +976,8 @@ bot.on("message", async(lol) => {
             case 'flamming':
             case 'harrypotter':
             case 'carvedwood':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy1/${command}?apikey=${apikey}&text=${args.join(" ")}` })
                 break
@@ -885,6 +985,8 @@ bot.on("message", async(lol) => {
             case 'arcade8bit':
             case 'battlefield4':
             case 'pubg':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/photooxy2/${command}?apikey=${apikey}&text1=${args[0]}&text2=${args[1]}` })
                 break
@@ -931,21 +1033,695 @@ bot.on("message", async(lol) => {
             case 'avatarlolnew':
             case 'lolbanner':
             case 'avatardota':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
                 if (args.length == 0) return await reply(`Example: ${prefix + command} LoL Human`)
                 await lol.replyWithPhoto({ url: `https://api.lolhuman.xyz/api/ephoto1/${command}?apikey=${apikey}&text=${args.join(" ")}` })
+                break 
+                case 'return':
+                if (!isOwner) return reply('Khusus Owner Kak')
+                try {
+					return bot.telegram.sendMessage(lol.message.chat.id, JSON.stringify(eval(args.join('')), null, '\t'), lol.replyWithChatAction("typing"))
+					} catch(e) {
+					reply(`Error: ${e}`)
+					}
+					break
+               
+                case 'owner':
+                try { 
+                await bot.telegram.sendContact(lol.message.chat.id, '6289649480997', 'BryanRfly', 'Bryan', 'Rfly', '+62 896-4948-0997', 'silently', 'ID', 'true')
+                } catch(e) {
+                reply('' + e)
+                }
+                break 
+                case 'emote':
+                try {  
+                p = ["🐷","🌝","🐷","🌝","🤗","❣️","😉"]
+                await bot.telegram.sendDice(lol.message.chat.id, p)
+                } catch(e) {
+                reply('' + e)
+                }
                 break
-            case 'test':
-                test = await bot.telegram.getChatMembersCount(lol.message.chat.id)
-                console.log(test)
+                case 'inf':
+                pk = await lol.message 
+                console.log(pk) 
+                reply('' + pk)
+                break 
+                case 'testt':
+                await bot.telegram.sendMessage(chatid, 'Hai Kak')
                 break
+           //EDUCATION MENU   
+           case 'translate':
+           case 'tr':
+           if (!isUser) return reply(mess.ser)
+           if (isBann) return reply(mess.ban)
+           if (!query) return reply(`contoh: ${prefix + command} en i love you`)
+           try { 
+                 result = await fetchJson(`https://kocakz.herokuapp.com/api/edu/translate?lang=${args[0]}&text=${args[1]}`)
+                 text = `Hasil: ${result.text}`
+                 await reply(text) 
+                 } catch(e) { 
+                    reply('' + e)
+                 }
+                 break
+           case 'nulis':
+           case 'tulis':
+           if (isBann) return await reply(mess.ban)
+           if (!isUser) return await reply(mess.ser)
+           if (!query) return await reply('Input Teks')
+           try {
+           await lol.replyWithPhoto({ url: `https://hardianto-chan.herokuapp.com/api/maker/nulis?apikey=hardianto&text=${query}` })
+           } catch(e) {
+                reply('Status ' + e)
+           }
+           break 
+           case 'nulis1': 
+           case 'nulis2':
+           case 'nulis3':
+           case 'nulis4':
+           case 'nulis5':
+           case 'nulis6':
+           if (!isUser) return reply(mess.ser)
+           if (isBann) return reply(mess.ban)
+           if (!query) return reply('Input Teks!') 
+           try { 
+            caption = `Semangat Belajarnya Ya Kak!🙂`
+           	await lol.replyWithPhoto({ url: `https://api.xteam.xyz/mager${command}?text=${query}&APIKEY=${xkey}` }, {caption: caption, parse_mode: "Markdown"}) 
+           	} catch(e) {
+           	   reply('Status ' + e)
+           	} 
+           	break
+           case 'brainly': 
+           if (isBann) return await reply(mess.ban)
+           if (!isUser) return await reply(mess.ser)
+           try {
+           if (!query) return await reply('Input Query!') 
+           result = await axios.get(`https://api.xteam.xyz/brainly?soal=${query}&APIKEY=${xkey}`) 
+           await reply(result.data.jawaban)
+           } catch(e) {
+              reply('Status ' + e)
+              }
+            break 
+           case 'kbbi':
+            if (!isUser) return await reply(mess.ser)
+            if (isBann) return await reply(mess.ban)
+            if (!query) return await reply('Input Query')
+           try {
+            ppek = await fetchJson(`https://hardianto-chan.herokuapp.com/api/info/kbbi?kata=${query}&apikey=hardianto`)
+            kntl = `Input: ${query}\n\nArti: ${ppek.result.arti}`
+            await reply(kntl)
+            } catch(e) {
+              reply('Status ' + e)
+            } 
+            break 
+            case 'wiki':
+            case 'wikipedia':
+            if (!query) return await reply('Input Query!')
+            if (isBann) return await reply(mess.ban)
+            if (!isUser) return await reply(mess.ser)
+             try {
+                wiki = await fetchJson(`https://hardianto-chan.herokuapp.com/api/info/wikipedia?search=${query}&apikey=hardianto`)
+                pedia = `Query: ${query}\n\nResult: ${wiki.result.result}`
+                reply(pedia)
+                } catch(e) {
+                    reply('Status ' + e)
+                }
+                break  
+            //FUN.MENU  
+               case 'meme':
+                   if (isBann) return await reply(mess.ban)
+                   if (!isUser) return await reply(`Silahkan Daftar Dahulu\n\nCara Daftar Cukup Ketik ${prefix}daftar`)
+                   try { 
+                         result = await fetchJson(`https://hardianto-chan.herokuapp.com/api/random/meme?apikey=hardianto`)
+                         ttle = `Title: ${result.result.title}\nAuthor: ${result.result.author}`
+                         mme = `${result.result.url}` 
+                         await lol.replyWithPhoto({ url: `https://api.xteam.xyz/asupan/darkjoke?APIKEY=${xkey}` })
+                         await lol.replyWithPhoto({ url: `${mme}` }, {caption: ttle, parse_mode: "Markdown"}) 
+                         } catch(e) {
+                             reply('Status ' + e)
+                             }
+                        break 
+                case 'tebakgambar': 
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
+                    try { 
+                      anu = await fetchJson(`https://api.xteam.xyz/game/tebakgambar?APIKEY=${xkey}`)
+                      gmbr = `${anu.url}`
+                      await lol.replyWithPhoto({ url: `${gmbr}` })
+                      bntu = `Bantuan ${anu.bantuan}\n\nWaktu Menjawab 30 Detik Di Mulai Dari Sekarang!`
+                      await reply(bntu)
+                      jwb = `Jawaban: ${anu.jawaban}`
+                      setTimeout( () => { 
+                      	reply(jwb)
+                      }, 30000) 
+                      setTimeout( () => {
+                      	reply(mess.hbis)
+                      }, 20000)
+                    } catch(e) {
+                    	reply('Status' + e)
+                    }
+                    break 
+                case 'caklontong':
+                if (isBann) return await reply(mess.ban)
+                if (!isUser) return await reply(mess.ser)
+                     try {
+                	result = await fetchJson('https://hardianto-chan.herokuapp.com/api/kuis/caklontong?apikey=hardianto')
+                    soal = `Pertanyaan: ${result.result.soal}\n\nWaktu Menjawab 30 Detik Di Mulai Dari Sekarang!`
+                    await reply(soal) 
+                    jwbn = `Jawaban; ${result.result.jawaban}\n\npenjelasan ${result.result.deskripsi}`
+                    setTimeout( () => {
+                        reply(jwbn)
+                    }, 30000) 
+                    setTimeout( () => {
+                    	reply(mess.hbis)
+                    }, 20000)
+                    } catch(e) {
+                    	reply('Status ' + e)
+                    }
+                    break 
+                case 'tebakbendera':
+                    if (isBann) return await reply(mess.ban)
+                    if (!isUser) return await reply(mess.ser)
+                    try { 
+                	anu = await fetchJson(`https://api.xteam.xyz/game/tebakbendera?APIKEY=${xkey}`) 
+                    bndr = `jawablah pertanyaan ini dengan waktu 30 detik!, bendera negara manakah ini?\n\n=>${anu.bendera}`
+                    await reply(bndr)
+                    jwbn = `jawaban: ${anu.jawaban}`
+                    setTimeout( () => {
+                    	reply(jwbn)
+                    }, 30000) 
+                    setTimeout( () => {
+                    	reply(mess.hbis)
+                    }, 20000)
+                    } catch (e) {
+                    	reply('Status ' + e)
+                    }
+                    break 
+                    case 'tebakangka':
+                    if (isBann) return await reply(mess.ban)
+                    if (!isUser) return await reply(mess.ser)
+                    if (!query) return await reply('Input Angka Pilihan Mu 1-100') 
+                    sesid = Math.floor(Math.random() * 100)
+                    text = `Kamu: ${query}\n\nBot: ${sesid}`
+                    await reply(text)
+                    break 
+                    case 'siapaaku':
+                    case 'siapaku':
+                    if (isBann) return await reply(mess.ban)
+                    if (!isUser) return await reply(mess.ser)
+                    try { 
+                    	result = await fetchJson(`https://api.xteam.xyz/game/siapakahaku?APIKEY=${xkey}`) 
+                        lvl = `${result.result.level}`
+                        sal = `${result.result.soal}`
+                        jbnn = `${result.result.jawaban}`
+                        text1 = `simaklah pertanyaan di bawah ini lalu jawablah dengan benar, waktu yang diberikan 30 detik di mulai dari sekarang!,\n\nlevel: ${lvl}\n\npertannyaan ${sal}` 
+                        text2 = `jawaban: ${jbnn}`
+                        await reply(text1)
+                        setTimeout( () => {
+                        	reply(text2)
+                        }, 30000) 
+                        setTimeout( () => {
+                        	reply(mess.hbis)
+                        }, 20000)
+                        } catch(e) {
+                        	reply('Status ' + e)
+                        }
+                        break  
+                        case 'susunkata':
+                        if (isBann) return await reply(mess.ban)
+                        if (!isUser) return await reply(`Silahkan Daftar Dahulu\n\nCara Daftar ${prefix}daftar`)
+                           try { 
+                             result = await fetchJson(`https://api.xteam.xyz/game/susunkata?APIKEY=${xkey}`)
+                             soall = `Susunlah Kata Acak Di Bawah Ini Menjadi Sebuah Kata Padu!,Waktu 30 Detik Di Mulai Dari Sekarang!\n\nLevel: ${result.result.level}\n\nKata: ${result.result.soal}`
+                             jwnn = `Jawaban: ${result.result.jawaban}` 
+                             babi = `${result.result.jawaban}`
+                             await reply(soall)
+                             if (!babi) return reply('Jawaban Mu Benar!')
+                             setTimeout( () => {
+                                 reply(jwnn)
+                             }, 30000)
+                             setTimeout( () => {
+                                reply(mess.hbis)
+                             }, 20000)
+                             } catch(e) {
+                                reply('Status ' + e)
+                                }
+                            break 
+                            case 'tebakkata':
+                            if (isBann) return await reply(mess.ban)
+                            if (!isUser) return await reply(mess.ser)
+                            try { 
+                            	 result = await fetchJson(`https://api.xteam.xyz/game/tebakkata?APIKEY=${xkey}`)
+                                 soll = `jawab lah pertanyaan berikut dengan benar!,waktu 30 detik di mulai dari sekarang!\n\nLwvel: ${result.result.level}\n\nSoal: ${result.result.soal}`
+                                 jwbnn = `jawaban ${result.result.jawaban}`
+                                 await reply(soll)
+                                 setTimeout( () => {
+                                 	reply(jwbnn)
+                                 }, 30000)
+                                 setTimeout( () => {
+                                 	reply(mess.hbis)
+                                 }, 20000)
+                                 } catch(e) { 
+                                 	reply('Status ' + e)
+                                 }
+                                 break 
+                                 case 'family100':
+                                 if (!isUser) return reply(mess.ser)
+                                 if (isBann) return reply(mess.ban)
+                                 try { 
+                                 	 result = await fetchJson(`https://api.xteam.xyz/game/family100?APIKEY=${xkey}`)
+                                      insol = `jawab lah soal berikut dengan benar!, waktu 30 detik di mulai dari sekarang!\n\n${result.soal}`
+                                      injwb = `jawaban: ${result.jawaban}`
+                                      await reply(insol)
+                                      setTimeout( () => {
+                                      	reply(injwb)
+                                      }, 30000)
+                                      setTimeout( () => {
+                                      	reply(mess.hbis)
+                                      }, 20000)
+                                      } catch(e) { 
+                                      	reply('Status' + e)
+                                      }
+                                      break
+                                      case 'asahotak':
+                                      if (!isUser) return reply(mess.ser)
+                                      if (isBann) return reply(mess.ban)
+                                      try { 
+                                      	 result = await fetchJson(`https://api.xteam.xyz/game/asahotak?APIKEY=${xkey}`) 
+                                           innsl = `jawablah soal berikut dengan benar!, waktu 30 detik di mulai dari sekarang!\n\nLevel: ${result.result.level}\n\nSoal: ${result.result.soal}`  
+                                           innjw = `jawaban: ${result.result.jawaban}` 
+                                           await reply(innsl)
+                                           setTimeout( () => {
+                                           	reply(innjw)
+                                           }, 30000)
+                                           setTimeout( () => {
+                                           	reply(mess.hbis)
+                                           }, 20000)
+                                           } catch(e) {
+                                           	reply('status ' + e)
+                                           }
+                                           break
+                                            
+ 
+//STICKER FEATURES
+                        case 'ttp': 
+                        if (isBann) return await reply(mess.ban)
+                        if (!isUser) return await reply(mess.ser)
+                        if (!query) return await reply('Input Teks') 
+                        try {
+                        await lol.replyWithSticker({ url: `https://api.xteam.xyz/ttp?file&text=${query}` })
+                        } catch(e) {
+                           reply('Error '+ e)
+                           }
+                        break 
+                        case 'attp':
+                        if (isBann) return await reply(mess.ban)
+                        if (!isUser) return await reply(mess.ser)
+                        if (!query) return await reply('Input Teks')
+                        try { 
+                        await lol.replyWithSticker({ url: `https://api.xteam.xyz/attp?file&text=${query}` })
+                        } catch(e) {
+                           reply('Status ' + e)
+                        }
+                        break 
+                        case 'smojigoogle':
+                        if (isBann) return await reply(mess.ban)
+                        if (!isUser) return await reply(mess.ser)
+                        if (!query) return await reply('Input emoji!')
+                        try { 
+                              stc = await fetchJson(`https://api.xteam.xyz/sticker/emojitopng?emo=${query}&APIKEY=${xkey}`) 
+                              stc2 = `${stc.hasil.apel.img}`
+                              await lol.replyWithSticker({ url:`${stc2}` })
+                              } catch(e) { 
+                                 reply('status ' + e)
+                                 }
+                              break 
+
+//REGISTRATION FEATURES        
+                             case 'unban': 
+                              if (!isOwner) return reply('Kamu Siapa?')
+				              if (!query) return await reply('Input Id Yang Ingin Di Hapus Dari Database Bot!')
+				              try {
+                              let delban = _ban.indexOf(query)
+                              _ban.splice(delban, 1)
+                              fs.writeFileSync('./lib/banned.json', JSON.stringify(_ban))
+                              reply(`Succes delete Banned User ${query}`)
+                              } catch (err) {
+                              reply(`Gagal delete Banned User ${query}.\n\n${err}`)
+                              }
+                              break 
+                              case 'ban':
+                              if (!query) return await reply('Input Username!')
+                              if (!isOwner) return await reply('Kamu Siapa>\\<')
+                              _ban.push(query)
+                              fs.writeFileSync('./lib/banned.json', JSON.stringify(_ban))
+                              reply('donee')
+                              break                   
+                              case 'daftar': 
+                              try { 
+                                   pp_user = await tele.getPhotoProfile(user.id)
+                                   } catch {
+                                   pp_user = 'https://telegra.ph/file/583ca5905d85b7484373b.jpg'
+                                   }
+                              if (isUser) return await reply('Kamu Sudah Daftar Sebelumnya!')
+                              _user.push(user.id)
+				              fs.writeFileSync('./lib/user.json', JSON.stringify(_user)) 
+				              snn = Math.floor(Math.random() * 10000000)
+				              caption = ` 
+Pendaftaran Sukses Dengan Detail Sebagai Berikut!
+
+
+Id: ${user.id}
+SN: ${snn}
+Nama: ${full_name}
+Bahasa: ${user.language_code}
+Nama Awal: ${user.first_name}
+Nama Akhir: ${user.last_name}
+Nam Pengguna: ${user.username}
+
+
+Note:
+
+Nama Pengguna Kamu Akan Hilang Dari Database Bot Apa Bila Bot Sedang Perbaikan Atau Kamu Melakukan ${prefix}unreg id telegram\n\nContoh: ${prefix}unreg 132563726`
+				              console.log(user) 
+				              await lol.replyWithPhoto({ url:`https://hardianto-chan.herokuapp.com/api/tools/verification?nama=${user.username}&namaGb=${full_name}&pepeGb=https://telegra.ph/file/0023986d1241fc510e8eb.jpg&sn=${snn}&pepeUser=${pp_user}&bege=https://telegra.ph/file/833c102f481b7fc37ff1b.jpg&apikey=hardianto` }, { caption: caption, parse_mode: "Markdown" })
+				              break 
+				              case 'unreg':
+				              if (!query) return await reply('Input Id Yang Ingin Di Hapus Dari Database Bot!')
+				              try {
+                              let delsayso = _user.indexOf(query)
+                              _user.splice(delsayso, 1)
+                              fs.writeFileSync('./lib/user.json', JSON.stringify(_user))
+                              reply(`Succes delete User ${query}`)
+                              } catch (err) {
+                              reply(`Gagal delete User ${query}.\n\n${err}`)
+                              }
+                              break 
+                              case 'status':
+                              ppl = `status: ${isUser?'User':'Bukan User'}`
+                              reply(ppl)
+                              break
+                              case 'getid':
+                              await reply(`Id Mu: ${user.id}`)
+                              break
+                              case 'cek':
+                              userrr = `Total User: ${_user.length}`
+                              await reply(userrr)
+                              break 
+                              case 'resetban':
+                              if (!isOwner) return await reply('Lu Siapa?')
+                              var bann = []
+                              _ban.splice(bann)
+                              fs.writeFileSync('./lib/banned.json', JSON.stringify(_ban))
+                              reply('okee...')
+                              break 
+                              case 'resetuser':
+                              if (!isOwner) return await reply('Kamu Siapa?')
+                              var serrr = []
+                              _user.splice(serrr)
+                              fs.writeFileSync('./lib/user.json', JSON.stringify(_user))
+                              reply('oke')
+                              break
+                              case 'adduser':
+                              if (!isOwner) return await reply('Kamu Siapa')
+                              if (!query) return await reply('Input Id User')
+                              _user.push(query)
+                              fs.writeFileSync('./lib/user.json', JSON.stringify(_user))
+                              reply('Sukses')
+                              break 
+//INFORMATION FEATURES 
+                              case 'stalkig':
+                              case 'igstalk':
+                              if (!isUser) return reply(mess.ser)
+                              if (isBann) return reply(mess.ban)
+                              if (!query) return reply('Input Username!') 
+                              ig.fetchUser(`${args.join(' ')}`)
+                              .then(Y => {
+                              console.log(`${args.join(' ')}`)
+                              ten = `${Y.profile_pic_url_hd}`
+                              teks = `Id​ : ${Y.profile_id}\nUsername : ${args.join('')}\nFull Name : ${Y.full_name}\nBio : ${Y.biography}\nFollowers : ${Y.following}\nFollowing : ${Y.followers}\nPrivate : ${Y.is_private}\nVerified : ${Y.is_verified}\n\nLink : https://instagram.com/${args.join('')}`
+                              lol.replyWithPhoto({ url: `${ten}` }, {caption: teks, pares_mode: "Markdown" })
+                              }) 
+                              .catch(e => {
+                                reply('Status ' + e)
+                              })
+                              break 
+                              case 'tiktokstalk':
+                              if (!isUser) return reply(mess.ser)
+                              if (isBann) return reply(mess.ban)
+                              if (!query) return reply('Input Username!') 
+                              reply('Sever Sedang Error!') 
+                              break 
+                              case 'twitstalk':
+                              if (!isUser) return reply(mess.ser)
+                              if (isBann) return reply(mess.ban)
+                              if (!query) return reply('Input Username!') 
+                              try { 
+                              	  
+                              	 result = await fetchJson(`https://kocakz.herokuapp.com/api/media/stalktwitt?user=${query}`)
+                                   teks = `
+Fullname: ${result.fullname}
+Username: ${result.username}
+Following: ${result.following}
+Dollowers: ${result.follower}
+Description: ${result.descText}
+Link Description: ${result.descUrl}
+`
+				                    ppny = `${result.profile}` 
+                                    await lol.replyWithPhoto({ url: `${ppny}` }, {caption: teks, parse_mode: "Markdown"})
+                                    } catch(e) {
+                                    	reply('' + e)
+                                    }
+                                    break 
+                                    case 'covid':
+                                    if (!isUser) return reply(mess.ser)
+                                    if (isBann) return reply(mess.ban)
+                                    if (!query) return reply('Input Nama Negara!')
+                                    try {
+                                    	  result = await fetchJson(`https://kocakz.herokuapp.com/api/edu/corona?country=${query}`)
+                                          txt = `
+ negara: ${result.results.country} 
+ aktif: ${result.results.active}
+ kasus: ${result.results.cases} 
+ sembuh: ${result.results.recovered}
+ meninggal: ${result.results.deaths} 
+ kasus hari ini: ${result.results.todayCases}
+ meninggal hari ini: ${result.results.todayDeaths}
+ ` 
+                                           await reply(txt)
+                                           } catch(e) {  
+                                           	reply('' + e)
+                                           }
+                                           break 
+                                           case 'infogempa':
+                                           if (!isUser) return reply(mes.ser)
+                                           if (isBann) return reply(mess.ban)
+                                           try { 
+                                                 ingfo = await fetchJson(`https://bryantestapi.herokuapp.com/api/infogempa?apikey=Alphabot`)
+                                                 text = `Waktu: ${ingfo.result.Waktu}\n`
+                                                 text += `Lintang: ${ingfo.result.Lintang}\n`
+                                                 text += `Bujur: ${ingfo.result.Bujur}\n`
+                                                 text += `Magnitudo: ${ingfo.result.Magnitudo}\n`
+                                                 text += `Kedalaman: ${ingfo.result.Kedalaman}\n`
+                                                 text += `Wilayah: ${ingfo.result.Wilayah}\n`
+                                                 text += `Map: ${ingfo.result.Map}`
+                                                 reply(text)
+                                                 } catch(e) {
+                                                 reply('' + e)
+                                                 }
+                                                 break 
+                                                 case 'cuacadunia':
+                                                 if (!isUser) return reply(mes.ser)
+                                                 if (isBann) return reply(mess.ban)
+                                                 try { 
+                                                       result = await fetchJson(`https://bryantestapi.herokuapp.com/api/infocuaca/dunia?apikey=Alphabot`)
+                                                       await lol.replyWithPhoto({ url:`${result.result.cuaca_dunia}` })
+                                                       } catch(e) {
+                                                       reply('' + e)
+                                                       }
+                                                       break 
+                                                       case 'infocuacabandara':
+                                                       if (!isUser) return rely(mess.ser)
+                                                       if (isBann) return reply(mess.ban)
+                                                       try { 
+                                                        result = await fetchJson(`https://bryantestapi.herokuapp.com/api/infocuaca/bandara?apikey=Alphabot`)
+                                                        for (let x of result.result.daftar_bandara) { 
+                                                        text =  `Nama Bandara: ${x.nama_bandara}\n`
+                                                        text += `Waktu Pengamatan: ${x.waktu_pengamatan}\n`
+                                                        text += `Arah Angin: ${x.arah_angin}\n`
+                                                        text += `Kecepatan: ${x.kecepatan}\n`
+                                                        text += `Jarak Pandang: ${x.jarak_pandang}\n`
+                                                        text += `Cuaca: ${x.cuaca}\n`
+                                                        text += `Suhu: ${x.suhu}\n`
+                                                        text += `Titik Timbun: ${x.titik_timbun}\n`
+                                                        text += `Tekanan Udara: ${x.tekanan_udara}`
+                                                        } 
+                                                        await reply(text)
+                                                        } catch(e) {
+                                                        reply('' + e)
+                                                        }
+                                                        break 
+                                                        case 'infotsunami':
+                                                        if (!isUser) return reply(mess.ser)
+                                                        if (isBann) return reply(mess.ban)
+                                                        try { 
+                                                              result = await fetchJson(`https://bryantestapi.herokuapp.com/api/infotsunami?apikey=Alphabot`)
+                                                              for (let y of result.result.daftar_tsunami) {
+                                                              teks = `Tanggal: ${y.tangal}\n`
+                                                              teks += `Lokasi : ${y.lokasi}\n`
+                                                              teks += `Magnitudo : ${y.magnitude}\n`
+                                                              teks += `Kedalaman : ${y.kedalaman}\n`
+                                                              teks += `Wilayah : ${y.wilayah}`
+                                                              reply(teks)
+                                                              } 
+                                                              } catch(e) {
+                                                              reply('' + e)
+                                                              } 
+                                                              break
+//Group Features
+                                           case 'tagme':
+                                           reply(`${Telegraf.mention(user.id)}`)
+                                           break 
+                                           case 'chatscount':
+                                           if (isBann) return await reply(mess.ban)
+                                           if (!isUser) return await reply(mess.ser)
+                                           test = await bot.telegram.getChatMembersCount(lol.message.chat.id)
+                                           reply(`Total Members in the Group ${lol.message.chat.title}: ${test}`)
+                                           break  
+                                           case 'leave':  
+                                           if (!isUser) return reply(mess.ser)
+                                           if (isBann) return reply(mess.ban)
+                                           if (!isGroup) return reply(mess.gc)
+                                           try {
+                                           await bot.telegram.leaveChat(lol.message.chat.id)
+                                           } catch(e) {
+                                           reply('' + e)
+                                           }
+                                           break 
+                                           case 'gcdesk': 
+                                           if (!isUser) return reply(mess.ser)
+                                           if (isBann) return reply(mess.ban)
+                                           if (!isGroup) return reply(mess.gc)
+                                           if (!query) return reply('Input Teks!')  
+                                           const aa = '```'
+                                           try {
+                                           await bot.telegram.setChatDescription(lol.message.chat.id, query)
+                                           reply(`Deskripsi Group Berhasil Di Ubah Oleh ${user.username} Menjadi Deskripsi Yang Baru\n\n${aa}${query}${aa}`)
+                                           } catch(e) {
+                                           reply('' + e)
+                                           } 
+                                           break  
+                                           case 'gctitle':
+                                            if (!isUser) return reply(mess.ser)
+                                           if (isBann) return reply(mess.ban)
+                                           if (!isGroup) return reply(mess.gc)
+                                           if (!query) return reply('Input Teks!')  
+                                           try {
+                                           await bot.telegram.setChatTitle(lol.message.chat.id, query)
+                                           reply(`Nama Group Berhasil Di Ubah Oleh ${user.username} Menjadi Nama Yang Baru\n\n${hem}${query}${hem}`)
+                                           } catch(e) {
+                                           reply('' + e)
+                                           } 
+                                           break 
+                                           case 'mypict':
+                                           if (!isUser) return reply(mess.ser)
+                                           if (isBann) return reply(mess.ban)
+                                           if (!isGroup) return reply(mess.gc)
+                                           try { 
+                                                 ppnya = await bot.telegram.getUserProfilePhotos(user.id)
+                                                 await lol.replyWithPhoto({ url: ppnya })
+                                                 } catch(e) {
+                                                 reply('' + e)
+                                                 }
+                                                 break 
+                                                 case 'infochat':
+                                                 if (!isUser) return reply(mess.ser)
+                                                 if (isBann) return reply(mess.ban)
+                                                 if (!isGroup) return reply(mess.gc)                                  
+                                                 try { 
+                                                       cha = await bot.telegram.getChat(lol.message.chat.id) 
+                                                       kntll = `${cha.permissions}`
+                                                       teks = `
+                                                       INFO CHAT MU YANG DI PERBOLEHKAN DI GROUP INI!
+                                                       
+                                                       
+Id Grup: ${cha.id}
+Nama Grup: ${cha.title}
+Deskripsi: ${cha.description}
+
+${hem}Dapat Mengirim Pesan:${hem} ${cha.permissions.can_send_messages}
+${hem}Dapat Mengirim Pesan Media:${hem} ${cha.permissions.can_send_media_messages}
+${hem}Dapat Mengirim Pesan Lain:${hem} ${cha.permissions.can_send_other_messages}
+${hem}Dapat Menambah Halaman Web:${hem} ${cha.permissions.can_add_web_page_previews}
+${hem}Dapat Melakukan Polling:${hem} ${cha.permissions.can_send_polls} 
+${hem}Dapat Mengubah Info Grup:${hem} ${cha.permissions.can_change_info}
+${hem}Dapat Menambahkan Peserta:${hem} ${cha.permissions.can_invite_users}
+${hem}Dapat Memberi Pin Pesan:${hem} ${cha.permissions.can_pin_messages}
+`
+
+                                                       await reply(teks) 
+                                                       console.log(cha)
+                                                     } catch(e) {
+                                                     reply('' + e)
+                                                     } 
+                                                     break
+                                                     case 'gcpict':
+                                                     if (isQuotedImage) { 
+                                                     url_file = await tele.getLink(file_id)
+                                                     await bot.telegram.setChatPhoto(lol.message.chat.id, url_file)
+                                                     } else {
+                                                     reply('Tag Gambar Nya!')
+                                                     }
+                                                     break 
+                                                     case 'delpict':
+                                                     try {
+                                                     await bot.telegram.deleteChatPhoto(lol.message.chat.id)
+                                                     } catch(e) {
+                                                     reply('' + e) 
+                                                     }
+                                                     break 
+                                                     case 'xnxxdl':
+                                                     if (!isUser) return reply(mess.ser)
+                                                     if (isBann) return reply(mes.ban)
+                                                     if (!query) return reply('Input Url')
+                                                     try { 
+                                                           result = await fetchJson(`https://api-melodicxt-3.herokuapp.com/api/xnxx-downloader?url=${query}&apiKey=administrator`) 
+                                                           teks = `TITLE: ${hem}${result.result.result.judul}${hem}\nSIZE: ${result.result.result.size}\nDESC: ${hem}${result.result.result.desc}${hem}`
+                                                           await lol.replyWithPhoto({ url: `${result.result.result.thumb}` }, {caption: teks, parse_mode: "Markdown" })
+                                                           reply('Media Sedang Di Unduh')
+                                                           await lol.replyWithVideo({ url: `${result.result.result.vid}` })
+                                                          } catch(e) {
+                                                          reply('' + e)
+                                                          }
+                                                          break 
+                                                          case 'xnxxsearch': 
+                                                          if (!isOwner) return reply('Kamu Siapa?')
+                                                          if (!isUser) return reply(mess.ser)
+                                                          if (isBann) return reply(mess.ban)
+                                                          if (!query) return reply('Input Query')
+                                                          try { 
+                                                               anu = await fetchJson(`https://bx-hunter.herokuapp.com/api/xnxxsearch?query=${query}&apikey=ikygans`)
+                                                          for (let asu of anu.result) { 
+                                                                teks = '------------------------' 
+                                                                teks = asu[Math.floor(Math.random() * asu.length)];
+                                                                pkata = `Title: ${asu.title}\nInfo: ${asu.info}\nLink: ${asu.link}\n--------------------------`
+                                                                reply(pkata)
+                                                              }
+                                                              } catch(e) { 
+                                                              reply('' + e)
+                                                              }
+                                                              break
+                                                                
+                                            
+                                           
             default:
                 if (!isGroup && !isCmd && !isMedia) {
                     await lol.replyWithChatAction("typing")
-                    simi = await fetchJson(`https://api.lolhuman.xyz/api/simi?apikey=${apikey}&text=${body}`)
+                    simi = await fetchJson(`http://hardianto-chan.herokuapp.com/api/fun/simi?query=${body}&apikey=hardianto`)
                     await reply(simi.result)
                 }
         }
-    } catch (e) {
+    } catch (e) { 
         console.log(chalk.whiteBright("├"), chalk.cyanBright("[  ERROR  ]"), chalk.redBright(e))
     }
 })
@@ -962,7 +1738,7 @@ bot.telegram.getMe().then((getme) => {
     console.log(chalk.greenBright(" │ + Platfrom : " + os.platform() || ""))
     console.log(chalk.greenBright(" │ + Prefix   : " + itsPrefix))
     console.log(chalk.greenBright(' ===================================================='))
-    console.log(chalk.whiteBright('╭─── [ LOG ]'))
+    console.log(chalk.whiteBright('╭─── [ BOT STARTED ]'))
 })
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
