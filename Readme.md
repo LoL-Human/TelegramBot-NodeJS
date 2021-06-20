@@ -2,8 +2,11 @@
 
 # Installation
 
-## Windows
-* [`Download Node JS`](https://nodejs.org/en/download/)
+## Platform 
+For Windows Install Additional Material Below 
+For Termux, you can directly clone For Termux, you can directly clone this repo and then install the package 
+
+* [ `Unduh Node JS` ] ( https://nodejs.org/en/download/ )
 * [`Download Git`](https://git-scm.com/download/win)
 
 
