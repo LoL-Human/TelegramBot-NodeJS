@@ -2,8 +2,8 @@
 
 # Installation
 
-## Platform 
-# For Windows Install Additional Material Below. For Termux, just clone this repo and install it like the example below 
+# Platform 
+## For Windows Install Additional Material Below. For Termux, just clone this repo and install it like the example below 
  
 
 * [ `Unduh Node JS` ] ( https://nodejs.org/en/download/ )
