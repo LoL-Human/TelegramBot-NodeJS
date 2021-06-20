@@ -3,8 +3,8 @@
 # Installation
 
 ## Platform 
-For Windows Install Additional Material Below 
-For Termux, you can directly clone For Termux, you can directly clone this repo and then install the package 
+# For Windows Install Additional Material Below. For Termux, just clone this repo and install it like the example below 
+ 
 
 * [ `Unduh Node JS` ] ( https://nodejs.org/en/download/ )
 * [`Download Git`](https://git-scm.com/download/win)
