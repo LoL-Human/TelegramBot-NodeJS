@@ -1,4 +1,4 @@
-# LoL Human Telegram Bot
+# Bryan Telegram Bot
 
 # Installation
 
