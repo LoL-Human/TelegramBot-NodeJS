@@ -9,13 +9,16 @@
 
 ## Cloning this repo
 ```cmd
-> git clone https://github.com/LoL-Human/TelegramBot-NodeJS
+> git clone https://github.com/BryanRfly/TelegramBot-NodeJS
 > cd TelegramBot-NodeJS
 ```
 
 ## Install the package
 ```cmd
 > npm i
+> npm i insta-fetcher
+> npm i performance-now 
+> npm i moment-timezone
 ```
 
 ## Edit config file
@@ -24,6 +27,7 @@ Edit the required value in `config.json`. You can get the apikey at [`LoL Human 
 { 
     "usernameOwner": "BryanRfly",
     "apikey": "",
+    "xkey": "",
     "bot_token": "",
     "owner": "LoL Human",
     "ownerLink": "https://t.me/LoLHumen",
@@ -38,9 +42,10 @@ Edit the required value in `config.json`. You can get the apikey at [`LoL Human 
 ```
 
 ## Note:
-* You can request a case in my [`WhatsApp`](http://wa.me/62895418200111).
+* You can request a case in my [`WhatsApp`](http://wa.me/6289649480997).
 
 # Thanks To
 * [`Telegraf`](https://github.com/telegraf/telegraf)
+* [`LoL-Human`](https://github.com/LoL-Human)
 * [`Pais`](https://github.com/Paiiss)
 * `Ben`
