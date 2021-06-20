@@ -1,4 +1,4 @@
-# Bryan Telegram Bot
+# Telegram Bot
 
 # Installation
 
