@@ -19,9 +19,6 @@
 ## Install the package
 ```cmd
 > npm i
-> npm i insta-fetcher
-> npm i performance-now 
-> npm i moment-timezone
 ```
 
 ## Edit config file
