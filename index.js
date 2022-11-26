@@ -3,6 +3,7 @@ const { Telegraf, Context } = require('telegraf')
 const help = require('./lib/help')
 const tele = require('./lib/tele')
 const chalk = require('chalk')
+const axios = require('axios').default
 const os = require('os')
 const fs = require('fs')
 
@@ -282,6 +283,18 @@ bot.on('message', async (lol) => {
 				if (args.length == 0) return await reply(`Example: ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
 				await lol.replyWithAudio({ url: `https://api.lolhuman.xyz/api/tiktokmusic?apikey=${apikey}&url=${args[0]}` })
 				break
+			case 'instagram':
+			case 'ig':
+				if (args.length == 0) return reply(`Example: ${prefix + command} https://www.instagram.com/p/CU0MhPjBZO2/`)
+				return fetchJson(`https://api.lolhuman.xyz/api/instagram?apikey=${apikey}&url=${args[0]}`).then(async (data) => {
+					for (let link of data.result) {
+						if (link.includes('.mp4')) {
+							await lol.replyWithVideo({ url: link })
+						} else {
+							await lol.replyWithPhoto({ url: link })
+						}
+					}
+				})
 			case 'twitterimage':
 				if (args.length == 0) return await reply(`Example: ${prefix + command} https://twitter.com/memefess/status/1385161473232543747`)
 				url = `https://api.lolhuman.xyz/api/twitterimage?apikey=${apikey}&url=${args[0]}`
