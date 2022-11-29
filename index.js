@@ -3,7 +3,6 @@ const { Telegraf, Context } = require('telegraf')
 const help = require('./lib/help')
 const tele = require('./lib/tele')
 const chalk = require('chalk')
-const axios = require('axios').default
 const os = require('os')
 const fs = require('fs')
 
@@ -390,9 +389,9 @@ bot.on('message', async (lol) => {
 
 			// Entertainment
 			case 'caklontong':
-				let { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/caklontong2?apikey=${apikey}`)
-				entertainment[lol.update.message.from.id] = result.answer.toLowerCase()
-				lol.reply(result.question)
+				result = await fetchJson(`https://api.lolhuman.xyz/api/tebak/caklontong2?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.result.answer.toLowerCase()
+				lol.reply(result.result.question)
 				break
 
 			// Searching
