@@ -389,9 +389,29 @@ bot.on('message', async (lol) => {
 
 			// Entertainment
 			case 'caklontong':
-				result = await fetchJson(`https://api.lolhuman.xyz/api/tebak/caklontong2?apikey=${apikey}`)
-				entertainment[lol.update.message.from.id] = result.result.answer.toLowerCase()
-				lol.reply(result.result.question)
+				var { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/caklontong2?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.answer.toLowerCase()
+				lol.reply(result.question)
+				break
+			case 'siapaaku':
+				var { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/siapaaku?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.answer.toLowerCase()
+				lol.reply(result.question)
+				break
+			case 'tebakgambar':
+				var { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/gambar2?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.answer.toLowerCase()
+				lol.replyWithPhoto({ url: result.image })
+				break
+			case 'tebakkata':
+				var { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/kata?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.jawaban.toLowerCase()
+				lol.reply(result.pertanyaan)
+				break
+			case 'tebakjenaka':
+				var { result } = await fetchJson(`https://api.lolhuman.xyz/api/tebak/jenaka?apikey=${apikey}`)
+				entertainment[lol.update.message.from.id] = result.answer.toLowerCase()
+				lol.reply(result.question)
 				break
 
 			// Searching
